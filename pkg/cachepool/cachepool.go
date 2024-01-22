@@ -62,10 +62,7 @@ func (cp *CachePool) Get(ctx context.Context, key string) ([]byte, bool) {
 			cp.localCache.Set(key, value, cp.ttl)
 			return value, true
 		}
-		fmt.Printf("get error: %s\n", err.Error())
 	}
-
-	fmt.Println("No peer found")
 
 	return nil, false
 }
@@ -79,11 +76,6 @@ func (cp *CachePool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// bytes, err := json.Marshal(value)
-	// if err != nil {
-	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-	// 	return
-	// }
 	w.Write(bytes)
 }
 
