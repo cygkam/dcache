@@ -2,7 +2,6 @@ package cachepool
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -74,17 +73,17 @@ func (cp *CachePool) Get(ctx context.Context, key string) ([]byte, bool) {
 func (cp *CachePool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	pathParam := strings.TrimPrefix(r.URL.Path, "/")
 
-	value, err := cp.getFromLocalCache(r.Context(), pathParam)
+	bytes, err := cp.getFromLocalCache(r.Context(), pathParam)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
-	bytes, err := json.Marshal(value)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	// bytes, err := json.Marshal(value)
+	// if err != nil {
+	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+	// 	return
+	// }
 	w.Write(bytes)
 }
 
