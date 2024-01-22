@@ -34,11 +34,12 @@ type CachePool struct {
 	ttl        time.Duration
 }
 
-func NewCachePool(f Fetcher) *CachePool {
+func NewCachePool(f Fetcher, port string) *CachePool {
 	cp := &CachePool{
 		peers:      hash.NewCustomConsistentHash(defaultReplicas, nil),
 		localCache: cache.NewCache(),
 		fetcher:    f,
+		port:       port,
 	}
 
 	return cp
@@ -85,6 +86,7 @@ func (cp *CachePool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cp *CachePool) getFromLocalCache(ctx context.Context, key string) ([]byte, error) {
+	fmt.Println("Get from local cache - peer")
 	value, hit := cp.localCache.Get(key)
 	if hit {
 		return value, nil
