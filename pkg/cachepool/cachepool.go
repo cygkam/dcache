@@ -72,9 +72,9 @@ func (cp *CachePool) Get(ctx context.Context, key string) ([]byte, bool) {
 }
 
 func (cp *CachePool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	pathParam := strings.Split(r.URL.Path, "/")
+	pathParam := strings.TrimPrefix(r.URL.Path, "/")
 
-	value, err := cp.getFromLocalCache(r.Context(), pathParam[1])
+	value, err := cp.getFromLocalCache(r.Context(), pathParam)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
@@ -105,7 +105,7 @@ func (cp *CachePool) getFromLocalCache(ctx context.Context, key string) ([]byte,
 }
 
 func (cp *CachePool) getFromPeer(ctx context.Context, peer string, key string) ([]byte, error) {
-	url := fmt.Sprintf("%v/%v", peer, url.QueryEscape(key))
+	url := fmt.Sprintf("http://%v/%v", peer, url.QueryEscape(key))
 
 	resp, err := http.Get(url)
 	if err != nil {
