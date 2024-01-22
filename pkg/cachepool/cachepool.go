@@ -72,7 +72,7 @@ func (cp *CachePool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	pathParam := strings.Split(r.URL.Path, "/")
 
 	value, err := cp.getFromLocalCache(r.Context(), pathParam[1])
-	if err == nil {
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
