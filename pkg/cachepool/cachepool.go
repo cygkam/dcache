@@ -53,8 +53,7 @@ func (cp *CachePool) SetPeers(peers ...string) {
 }
 
 func (cp *CachePool) Get(ctx context.Context, key string) ([]byte, bool) {
-	value, hit := cp.localCache.Get(key)
-	if hit {
+	if value, hit := cp.localCache.Get(key); hit {
 		return value, true
 	}
 
@@ -64,7 +63,10 @@ func (cp *CachePool) Get(ctx context.Context, key string) ([]byte, bool) {
 			cp.localCache.Set(key, value, cp.ttl)
 			return value, true
 		}
+		fmt.Printf("get error: %s\n", err.Error())
 	}
+
+	fmt.Println("No peer found")
 
 	return nil, false
 }
@@ -119,6 +121,6 @@ func (cp *CachePool) getFromPeer(ctx context.Context, peer string, key string) (
 	if err != nil {
 		return nil, err
 	}
-
+	fmt.Sprintln(respBody)
 	return respBody, nil
 }
