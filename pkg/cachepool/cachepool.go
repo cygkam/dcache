@@ -67,7 +67,7 @@ func (cp *CachePool) Get(ctx context.Context, key string) ([]byte, bool) {
 	return nil, false
 }
 
-func (cp *CachePool) Serve(w http.ResponseWriter, r *http.Request) {
+func (cp *CachePool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	pathParam := strings.Split(r.URL.Path, "/")
 
 	value, err := cp.getFromLocalCache(r.Context(), pathParam[1])
