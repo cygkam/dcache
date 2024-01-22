@@ -93,11 +93,12 @@ func (cp *CachePool) getFromLocalCache(ctx context.Context, key string) ([]byte,
 	}
 	value, err := cp.fetcher.Fetch(ctx, key)
 	if err != nil {
-		cp.localCache.Set(key, value, cp.ttl)
 		return value, err
 	}
 
-	return nil, fmt.Errorf("error occured during cache lookup")
+	cp.localCache.Set(key, value, cp.ttl)
+
+	return value, nil
 }
 
 func (cp *CachePool) getFromPeer(ctx context.Context, peer string, key string) ([]byte, error) {
