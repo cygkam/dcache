@@ -50,35 +50,29 @@ func (cp *CachePool) SetPeers(peers ...string) {
 	}
 }
 
-func (cp *CachePool) Get(ctx context.Context, key string) ([]byte, error) {
+func (cp *CachePool) Get(ctx context.Context, key string) ([]byte, bool) {
 	value, hit := cp.localCache.Get(key)
 	if hit {
-		return value, nil
+		return value, true
 	}
 
 	if peer, ok := cp.peers.Get(key); ok {
 		value, err := cp.getFromPeer(ctx, peer.(string), key)
 		if err == nil {
-			return value, nil
+			cp.localCache.Set(key, value, cp.ttl)
+			return value, true
 		}
 	}
 
-	bytes, err := cp.fetcher.Fetch(ctx, key)
-	if err != nil {
-		return nil, err
-	}
-
-	cp.localCache.Set(key, bytes, cp.ttl)
-
-	return bytes, nil
+	return nil, false
 }
 
 func (cp *CachePool) Serve(w http.ResponseWriter, r *http.Request) {
 	pathParam := strings.Split(r.URL.Path, "/")
 
-	value, err := cp.Get(r.Context(), pathParam[1])
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	value, err := cp.getFromLocalCache(r.Context(), pathParam[1])
+	if err == nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
@@ -88,6 +82,20 @@ func (cp *CachePool) Serve(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Write(bytes)
+}
+
+func (cp *CachePool) getFromLocalCache(ctx context.Context, key string) ([]byte, error) {
+	value, hit := cp.localCache.Get(key)
+	if hit {
+		return value, nil
+	}
+	value, err := cp.fetcher.Fetch(ctx, key)
+	if err != nil {
+		cp.localCache.Set(key, value, cp.ttl)
+		return value, err
+	}
+
+	return nil, fmt.Errorf("error occured during cache lookup")
 }
 
 func (cp *CachePool) getFromPeer(ctx context.Context, peer string, key string) ([]byte, error) {
