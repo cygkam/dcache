@@ -103,7 +103,7 @@ func (cp *CachePool) getFromLocalCache(ctx context.Context, key string) ([]byte,
 }
 
 func (cp *CachePool) getFromPeer(ctx context.Context, peer string, key string) ([]byte, error) {
-	url := fmt.Sprintf("%v:%v/%v", peer, cp.port, url.QueryEscape(key))
+	url := fmt.Sprintf("%v/%v", peer, url.QueryEscape(key))
 
 	resp, err := http.Get(url)
 	if err != nil {
