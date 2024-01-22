@@ -29,12 +29,12 @@ type Fetch func(ctx context.Context, key string) ([]byte, error)
 type CachePool struct {
 	peers      *hash.ConsistentHash
 	localCache *cache.Cache
-	fetcher    Fetcher
+	fetcher    *Fetcher
 	port       string
 	ttl        time.Duration
 }
 
-func NewCachePool(f Fetcher) *CachePool {
+func NewCachePool(f *Fetcher) *CachePool {
 	cp := &CachePool{
 		peers:      hash.NewCustomConsistentHash(defaultReplicas, nil),
 		localCache: cache.NewCache(),
