@@ -34,12 +34,13 @@ type CachePool struct {
 	ttl        time.Duration
 }
 
-func NewCachePool(f Fetcher, port string) *CachePool {
+func NewCachePool(f Fetcher, ttl time.Duration, port string) *CachePool {
 	cp := &CachePool{
 		peers:      hash.NewCustomConsistentHash(defaultReplicas, nil),
 		localCache: cache.NewCache(),
 		fetcher:    f,
 		port:       port,
+		ttl:        ttl,
 	}
 
 	return cp
