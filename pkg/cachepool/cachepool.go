@@ -15,31 +15,57 @@ import (
 
 const (
 	defaultReplicas = 40
+	defaultPort     = "9929"
 )
 
-type HashFunc func([]byte) uint64
+type (
+	Fetcher interface {
+		Fetch(ctx context.Context, key string) ([]byte, error)
+	}
 
-type Fetcher interface {
-	Fetch(ctx context.Context, key string) ([]byte, error)
-}
+	CachePoolCfg struct {
+		fetcher Fetcher
+		port    string
+		ttl     time.Duration
+	}
 
-type Fetch func(ctx context.Context, key string) ([]byte, error)
+	CachePool struct {
+		fetcher      Fetcher
+		fetchEnabled bool
+		localCache   *cache.Cache
+		peers        *hash.ConsistentHash
+		port         string
+		ttl          time.Duration
+	}
+)
 
-type CachePool struct {
-	peers      *hash.ConsistentHash
-	localCache *cache.Cache
-	fetcher    Fetcher
-	port       string
-	ttl        time.Duration
-}
+func NewCachePool(cfg *CachePoolCfg) *CachePool {
+	var (
+		port         string
+		fetcher      Fetcher
+		fetchEnabled bool
+	)
 
-func NewCachePool(f Fetcher, ttl time.Duration, port string) *CachePool {
+	if cfg.port == "" {
+		port = defaultPort
+	} else {
+		port = cfg.port
+	}
+
+	if cfg.fetcher == nil {
+		fetchEnabled = false
+	} else {
+		fetcher = cfg.fetcher
+		fetchEnabled = true
+	}
+
 	cp := &CachePool{
-		peers:      hash.NewCustomConsistentHash(defaultReplicas, nil),
-		localCache: cache.NewCache(),
-		fetcher:    f,
-		port:       port,
-		ttl:        ttl,
+		peers:        hash.NewCustomConsistentHash(defaultReplicas, nil),
+		localCache:   cache.NewCache(),
+		fetcher:      fetcher,
+		fetchEnabled: fetchEnabled,
+		port:         port,
+		ttl:          cfg.ttl,
 	}
 
 	return cp
@@ -80,7 +106,6 @@ func (cp *CachePool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cp *CachePool) getFromLocalCache(ctx context.Context, key string) ([]byte, error) {
-	fmt.Println("Get from local cache - peer")
 	value, hit := cp.localCache.Get(key)
 	if hit {
 		return value, nil
@@ -112,6 +137,6 @@ func (cp *CachePool) getFromPeer(ctx context.Context, peer string, key string) (
 	if err != nil {
 		return nil, err
 	}
-	fmt.Sprintln(respBody)
+
 	return respBody, nil
 }

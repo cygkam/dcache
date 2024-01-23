@@ -5,15 +5,8 @@ import (
 	"time"
 )
 
-type Cacher interface {
-	Set(string, []byte, time.Duration) error
-	Get(string) ([]byte, bool)
-	Delete(string)
-}
-
 type Cache struct {
-	data    *sync.Map
-	fetcher func()
+	data *sync.Map
 }
 
 type entry struct {
@@ -27,10 +20,9 @@ func NewCache() *Cache {
 	return cache
 }
 
-func (c *Cache) Set(key string, value []byte, ttl time.Duration) error {
+func (c *Cache) Set(key string, value []byte, ttl time.Duration) {
 	entry := entry{key: key, value: value, expire: time.Now().Add(ttl)}
 	c.data.Store(key, entry)
-	return nil
 }
 
 func (c *Cache) Get(key string) ([]byte, bool) {
