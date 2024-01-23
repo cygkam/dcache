@@ -34,9 +34,9 @@ func TestNewCachePoolShouldCreateDefaultCachePool(t *testing.T) {
 func TestNewCachePoolShouldCreateCustomCachePool(t *testing.T) {
 	mf := &MockFetcher{}
 	cfg := &CachePoolCfg{
-		port:    "30345",
-		ttl:     time.Second * 30,
-		fetcher: mf,
+		Port:    "30345",
+		Ttl:     time.Second * 30,
+		Fetcher: mf,
 	}
 
 	cp := NewCachePool(cfg)
@@ -51,8 +51,8 @@ func TestGetShouldRetrieveValueFromLocalCache(t *testing.T) {
 	key := "2d8b59ca-fce0-4645-8de3-ec88f899656f"
 	data := []byte("Cras ac lectus ut lectus")
 	cfg := &CachePoolCfg{
-		fetcher: &MockFetcher{},
-		ttl:     time.Second * 30,
+		Fetcher: &MockFetcher{},
+		Ttl:     time.Second * 30,
 	}
 	cp := NewCachePool(cfg)
 
@@ -68,8 +68,8 @@ func TestServeHTTPShouldReturnValueFromLocalCache(t *testing.T) {
 	key := "2d8b59ca-fce0-4645-8de3-ec88f899656f"
 	data := []byte("Cras ac lectus ut lectus")
 	cfg := &CachePoolCfg{
-		fetcher: &MockFetcher{},
-		ttl:     time.Second * 30,
+		Fetcher: &MockFetcher{},
+		Ttl:     time.Second * 30,
 	}
 	cp := NewCachePool(cfg)
 
@@ -83,12 +83,27 @@ func TestServeHTTPShouldReturnValueFromLocalCache(t *testing.T) {
 	assert.Equal(t, data, recorder.Body.Bytes())
 }
 
+func TestServeHTTPShouldGiveCacheMiss(t *testing.T) {
+	key := "2d8b59ca-fce0-4645-8de3-ec88f899656f"
+	cfg := &CachePoolCfg{
+		Ttl: time.Second * 30,
+	}
+	cp := NewCachePool(cfg)
+
+	recorder := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/%s", key), nil)
+	cp.ServeHTTP(recorder, req)
+
+	assert.Equal(t, http.StatusOK, recorder.Code)
+	assert.Equal(t, []byte(nil), recorder.Body.Bytes())
+}
+
 func TestServeHTTPShouldReturnValueFetchedFromSourceAndPopulateLocally(t *testing.T) {
 	key := "2d8b59ca-fce0-4645-8de3-ec88f899656f"
 	data := []byte("Cras ac lectus ut lectus")
 	cfg := &CachePoolCfg{
-		fetcher: &MockFetcher{data: data},
-		ttl:     time.Second * 30,
+		Fetcher: &MockFetcher{data: data},
+		Ttl:     time.Second * 30,
 	}
 	cp := NewCachePool(cfg)
 

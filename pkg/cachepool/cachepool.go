@@ -24,9 +24,9 @@ type (
 	}
 
 	CachePoolCfg struct {
-		fetcher Fetcher
-		port    string
-		ttl     time.Duration
+		Fetcher Fetcher
+		Port    string
+		Ttl     time.Duration
 	}
 
 	CachePool struct {
@@ -46,16 +46,16 @@ func NewCachePool(cfg *CachePoolCfg) *CachePool {
 		fetchEnabled bool
 	)
 
-	if cfg.port == "" {
+	if cfg.Port == "" {
 		port = defaultPort
 	} else {
-		port = cfg.port
+		port = cfg.Port
 	}
 
-	if cfg.fetcher == nil {
+	if cfg.Fetcher == nil {
 		fetchEnabled = false
 	} else {
-		fetcher = cfg.fetcher
+		fetcher = cfg.Fetcher
 		fetchEnabled = true
 	}
 
@@ -65,7 +65,7 @@ func NewCachePool(cfg *CachePoolCfg) *CachePool {
 		fetcher:      fetcher,
 		fetchEnabled: fetchEnabled,
 		port:         port,
-		ttl:          cfg.ttl,
+		ttl:          cfg.Ttl,
 	}
 
 	return cp
@@ -110,14 +110,17 @@ func (cp *CachePool) getFromLocalCache(ctx context.Context, key string) ([]byte,
 	if hit {
 		return value, nil
 	}
-	value, err := cp.fetcher.Fetch(ctx, key)
-	if err != nil {
-		return value, err
+
+	if cp.fetchEnabled {
+		value, err := cp.fetcher.Fetch(ctx, key)
+		if err != nil {
+			return value, err
+		}
+		cp.localCache.Set(key, value, cp.ttl)
+		return value, nil
 	}
 
-	cp.localCache.Set(key, value, cp.ttl)
-
-	return value, nil
+	return nil, nil
 }
 
 func (cp *CachePool) getFromPeer(ctx context.Context, peer string, key string) ([]byte, error) {
