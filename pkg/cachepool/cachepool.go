@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/cygkam/dcache/pkg/cache"
+	"github.com/sirupsen/logrus"
 	"github.com/zeromicro/go-zero/core/hash"
 )
 
@@ -84,10 +85,12 @@ func (cp *CachePool) Get(ctx context.Context, key string) ([]byte, bool) {
 
 	if peer, ok := cp.peers.Get(key); ok {
 		value, err := cp.getFromPeer(ctx, peer.(string), key)
-		if err == nil {
-			cp.localCache.Set(key, value, cp.ttl)
-			return value, true
+		if err != nil {
+			logrus.Errorf("Couldn't get value from peer %s: %s", peer.(string), err.Error())
+			return nil, false
 		}
+		cp.localCache.Set(key, value, cp.ttl)
+		return value, true
 	}
 
 	return nil, false
